@@ -106,7 +106,7 @@ public class CoMoMAB {
     					//add PC  corresponding to G(0, N - n) for each class s less than the current class
     					row++;
     					col = basis.indexOf(n, 0);
-    					A[row][col] = N.getAsBigRational(s-1);
+    					A[row][col] = N.getAsBigRational(s-1).subtract(n.getAsBigRational(s-1)); //CHANGED
     					n.plusOne(s);
     					col = basis.indexOf(n, 0);
     					A[row][col] = qnm.getDelayAsBigRational(s-1).negate();
@@ -143,5 +143,16 @@ public class CoMoMAB {
     	System.out.println("B:");
     	MiscFunctions.printMatrix(B);
     }
+    
+    public int getMatrixSize() {
+    	return matrix_size;
+    }
 
+    public BigRational[][] getA() {
+    	return A;
+    }
+    
+    public BigRational[][] getB() {
+    	return B;
+    }
 }

@@ -42,7 +42,7 @@ public class Main {
 			System.out.println("Parsing Sucessful! R: " + qnm.R);
 			System.out.println("Parsing Sucessful! M: " + qnm.M);
 			
-			Integer[] NA = {6,1};
+			Integer[] NA = {1,0};
 			PopulationVector N = new PopulationVector(NA);
 			
 			CoMoMAB matrices = new CoMoMAB(qnm);
