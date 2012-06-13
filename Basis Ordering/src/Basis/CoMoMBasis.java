@@ -74,13 +74,13 @@ public class CoMoMBasis {
 		int population_position = order.indexOf(n);
 		int queue_added = m;
 		//order multiplicities 1,2,3,...M,0
-		System.out.println("pop_pos: " + population_position);
-		System.out.println("queue_added: " + queue_added);		
+		//System.out.println("pop_pos: " + population_position);
+		//System.out.println("queue_added: " + queue_added);		
 		
 		int multiplicity_order;
 		if(queue_added == 0) multiplicity_order = M;
 		else multiplicity_order = queue_added - 1;
-		System.out.println("index: " + (population_position + multiplicity_order*MiscFunctions.binomialCoefficient(M + R - 1 , M)));
+		//System.out.println("index: " + (population_position + multiplicity_order*MiscFunctions.binomialCoefficient(M + R - 1 , M)));
 		return population_position + multiplicity_order*MiscFunctions.binomialCoefficient(M + R - 1 , M);		
 	}
 	

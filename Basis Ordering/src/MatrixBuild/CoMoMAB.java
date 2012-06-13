@@ -42,12 +42,13 @@ public class CoMoMAB {
     	R = qnm.R;
     	matrix_size = (M + 1)*MiscFunctions.binomialCoefficient(M + R - 1 , M);    
     	System.out.println("matrix_size: " + matrix_size);
-    }
-    
-    public void initialise() {
-    	 
+    	
     	basis = new BTFCoMoMBasisMLorder(R,M);
     	basis.print();
+    }
+    
+    public void initialise() {    	 
+    	
     	
          A = new BigRational[matrix_size][matrix_size];         
          B = new BigRational[matrix_size][matrix_size];
@@ -72,12 +73,18 @@ public class CoMoMAB {
     				row++;
     				col = basis.indexOf(n,k);
     				A[row][col] = BigRational.ONE;
+    				System.out.println("Fisrt n: " + n);
+    				System.out.println("row: " + row);
     				if(n.sumTail(current_class) > 0) {  //negative population
+    					System.out.println("1");
     					col = basis.indexOf(n, k);
+    					//System.out.println("col: " + col);
     					B[row][col] = BigRational.ONE;
     				} else {
-    					n.minusOne(current_class);
+    					System.out.println("2");
+    					n.minusOne(current_class);    					
     					col = basis.indexOf(n, k);
+    					System.out.println("col: " + col);
     					B[row][col] = BigRational.ONE;
     					n.restore();
     				}    				
@@ -91,13 +98,13 @@ public class CoMoMAB {
     					A[row][col] = BigRational.ONE;
     					col = basis.indexOf(n, 0);
     					A[row][col] = BigRational.ONE.negate();
-    					for(int s = 1; s < current_class; s++) {
+    					for(int s = 1; s <= current_class - 1; s++) {
     						n.plusOne(s);	
-    						System.out.println("k: " + k);
+    						System.out.println("n: " + n);
     						col = basis.indexOf(n, k);
     						n.restore();
     						A[row][col] = qnm.getDemandAsBigRational(k-1, s-1).negate();
-    						System.out.println("k-1,s-1: " + qnm.getDemandAsBigRational(k-1, s-1));
+    						//System.out.println("k-1,s-1: " + qnm.getDemandAsBigRational(k-1, s-1));
     					}
     					col = basis.indexOf(n, k);
     					B[row][col] = qnm.getDemandAsBigRational(k-1, current_class-1);
@@ -122,7 +129,7 @@ public class CoMoMAB {
     	for(int i = 0; i < MiscFunctions.binomialCoefficient(M + R - 1 , M); i++)  { //loop over all possible population changes n
     		//add PC of class 'current_class'
     		n  = basis.getPopulationChangeVector(i).copy(); // To improve bug safety
-    		if(n.sumTail(current_class-1) <= 0) {  //potential negative population TODO remove <
+    		if(n.sumTail(current_class-1) <= 0) {  // TODO remove <
     			row++;
     			col = basis.indexOf(n, 0);
 				A[row][col] = N.getAsBigRational(current_class-1);
@@ -130,8 +137,7 @@ public class CoMoMAB {
 				B[row][col] = qnm.getDelayAsBigRational(current_class -1 );
 				for( int k = 1; k <= M; k++) {
 					col = basis.indexOf(n, k);
-					B[row][col] = qnm.getDemandAsBigRational( k - 1, current_class -1 );
-					System.out.println("adding");
+					B[row][col] = qnm.getDemandAsBigRational( k - 1, current_class -1 );					
 				}
     		}
     	}

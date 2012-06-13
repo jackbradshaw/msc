@@ -154,8 +154,7 @@ public class PopulationChangeVector extends EnhancedVector implements Comparable
         	         if (v1.get(j) > 0 && v2.get(j) == 0) {
         	             return -1;
         		     }
-        		}
-        		
+        		}        		
         		// Vectors have non zero elements in same position
         		// Check 3: Compare values of non zero elements, left to right
         		for( int j = 0; j < v1.size() - 1; j++) { //sum over first R - 1 positions
@@ -174,11 +173,13 @@ public class PopulationChangeVector extends EnhancedVector implements Comparable
     	return total;
     }
     
+    //index inclusive
     public int sumTail(int index) {
     	return sum(index, size());    
     }
     
+    //index inclusive
     public int sumHead(int index) {
-    	return sum(0, index);    
+    	return sum(0, index +1);    
     }
 }
