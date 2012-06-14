@@ -38,9 +38,9 @@ public abstract class Basis {
 	 */
 	public Basis(QNModel qnm) {
 		this.qnm = qnm;
-		setSize();
 		R = qnm.R;
 		M = qnm.M;
+		setSize();		
 		basis = new BigRational[size];
 		//TODO uncomputables??
 	}
@@ -49,12 +49,12 @@ public abstract class Basis {
 	 * Initialises the basis for the begin of the recursion on next class
 	 * @param next_class the next class to be recursed on
 	 */	
-	abstract void initialiseForClass(int next_class);
+	public abstract void initialiseForClass(int next_class);
 	
 	/**
 	 * Calculates the size of the basis to be store in variable size
 	 */
-	abstract void setSize();
+	protected abstract void setSize();
 	
 	/**
 	 * @return The size of the basis

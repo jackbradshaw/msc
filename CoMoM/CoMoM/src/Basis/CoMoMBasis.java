@@ -39,13 +39,12 @@ public class CoMoMBasis extends Basis{
 	 */
 	private void generate() {
 		
-		PopulationChangeVector v = new PopulationChangeVector(0,R);
-		R = R - 1;
+		PopulationChangeVector v = new PopulationChangeVector(0,R);		
 		order.add(v);
 		int current_position = 1;
 		for(int i = 0; i < M; i++) {
-			for(int j = 0; j < R; j++) {
-				for(int k = current_position - MiscFunctions.binomialCoefficient(R - j + i - 1, i); 
+			for(int j = 0; j < R - 1; j++) {
+				for(int k = current_position - MiscFunctions.binomialCoefficient(R - 1 - j + i - 1, i); 
 					k < current_position; k++) {
 						v = order.get(k);						
 						v.plusOne(j+1);
@@ -53,7 +52,7 @@ public class CoMoMBasis extends Basis{
 						v.restore();
 				}				
 			}
-			current_position += MiscFunctions.binomialCoefficient(R + i , i + 1);			
+			current_position += MiscFunctions.binomialCoefficient(R - 1 + i , i + 1);			
 		}
 	}
 	
@@ -91,7 +90,7 @@ public class CoMoMBasis extends Basis{
 		int multiplicity_order;
 		if(queue_added == 0) multiplicity_order = M;
 		else multiplicity_order = queue_added - 1;		
-		return population_position + multiplicity_order*order.size();		
+		return population_position + multiplicity_order* MiscFunctions.binomialCoefficient(M + R - 1, M);
 	}
 	
 	/**
@@ -120,15 +119,15 @@ public class CoMoMBasis extends Basis{
 	 * @param next_class the next class to be recursed on
 	 */	
 	@Override
-	void initialiseForClass(int next_class) {
-		// TODO Auto-generated method stub		
+	public void initialiseForClass(int next_class) {
+		System.out.println("Intialisng for class " + next_class);	
 	}
 	
 	/**
 	 * Calculates the size of the basis to be store in variable size
 	 */
 	@Override
-	void setSize() {
+	public void setSize() {
 		size  = (M + 1)*MiscFunctions.binomialCoefficient(M + R - 1 , M);		
 	}		
 }
