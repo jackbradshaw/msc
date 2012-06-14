@@ -1,0 +1,78 @@
+package Utilities;
+
+/**
+ *
+ *      Η κλάση Timer δίνει τη δυνατότητα δημιουργίας ενός Timer, ο οποίος θα
+ *  δέχεται τις εντολές start και pause και θα μπορεί να επιστρέψει το χρόνο που
+ *  μεσολάβησε σε διάφορες μορφές.
+ *
+ *  @author Μιχαήλ Μακαρονίδης, 2009
+ *
+ */
+public class Timer {
+
+    /**
+     *      Μεταβλητή στην οποία αποθηκεύεται ο χρόνος στον οποίο δόθηκε η
+     *  σχετική εντολή .
+     */
+    private long startTime, stopTime, interval;
+
+    public Timer() {
+        super();
+        this.interval = 0;
+    }
+
+    public Timer(long interval) {
+        super();
+        this.interval = interval;
+    }
+
+    /**
+     *      Συνάρτηση που ξεκινά τον Timer, δηλαδή θέτει τον παρόντα χρόνο ως
+     *  χρόνο έναρξης του διαστήματος.
+     *
+     */
+    public void start() {
+        startTime = System.currentTimeMillis();
+    }
+
+    /**
+     *      Συνάρτηση που σταματά τον Timer, δηλαδή θέτει τον παρόντα χρόνο ως
+     *  χρόνο λήξης του διαστήματος.
+     *
+     */
+    public void pause() {
+        stopTime = System.currentTimeMillis();
+        interval += stopTime - startTime;
+    }
+
+    /**
+     *      Συνάρτηση η οποία επιστρέφει το διάστημα που μεσολάβησε μεταξύ της
+     *  έναρξης και της πάυσης του μετρητή. Το αποτέλεσμα είναι έγκυρο μόνο αν
+     *  η αλληλουχία των κλήσεων (start, pause) έχει γίνει με ορθή σειρά.
+     *
+     * @return  Χρονικό διάστημα σε msec
+     */
+    public long getInterval() {
+        return interval;
+    }
+
+    /**
+     *      Συνάρτηση η οποία επιστρέφει το διάστημα που μεσολάβησε μεταξύ της
+     *  έναρξης και της πάυσης του μετρητή σε μορφή ευκολότερα κατανοητή από
+     *  τον άνθρωπο. Το αποτέλεσμα είναι έγκυρο μόνο αν η αλληλουχία των κλήσεων
+     *  (start, pause) έχει γίνει με ορθή σειρά.
+     *
+     * @return  String που αναπαριστά το χρονικό διάστημα σε ευανάγνωστη μορφή
+     */
+    public String getPrettyInterval() {
+
+        if (interval < 1000) {
+            return (interval + " msec");
+        } else if (interval < 60000) {
+            return (interval / 1000.0 + " sec");
+        } else {
+            return ((interval / 60000) + " min " + ((interval - (interval / 60000) * 60000) / 1000.0) + " sec");
+        }
+    }
+}
