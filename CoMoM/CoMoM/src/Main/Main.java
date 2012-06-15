@@ -44,18 +44,17 @@ public class Main {
 	public static void solve() throws InternalErrorException {
 		
 		current_N = new PopulationVector(0,R);
+		basis.initialiseBasis();
 				
 		for(int current_class = 1; current_class <= R; current_class++) {
 			System.out.println("Working on class " + current_class);
-			current_N.plusOne(current_class);
-			solveForClass(current_class);
-			if(current_class < R) {
-				basis.initialiseForClass(current_class + 1);
-			}
+			System.out.println("Current Population: " + current_N);
+			solveForClass(current_class);			
 		}
 	}
 	
 	public static void solveForClass(int current_class) throws InternalErrorException {
+		current_N.plusOne(current_class);
 		generateAB(current_N, current_class);
 		System.out.println("Intialising A and B:");
 		System.out.println("A:");
@@ -66,10 +65,10 @@ public class Main {
 				current_class_population <= target_N.get(current_class - 1); 
 				current_class_population++ ) {
 			
-			System.out.println("Current Population: " + current_N);
 			
-			//Solve the system		
-			System.out.println("Solving System...\n");
+			System.out.println("Solving for population: " + current_N);
+			
+			solveSystem();
 						
 			if(current_class_population < target_N.get(current_class - 1)) {
 				System.out.println("Updated A: ");
@@ -79,6 +78,10 @@ public class Main {
 			}
 		}
 		
+	}
+	
+	public static void solveSystem() {
+		System.out.println("Solving System...\n");
 	}
 	
 	 public static void generateAB(PopulationVector N, int current_class) throws InternalErrorException {

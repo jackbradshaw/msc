@@ -115,12 +115,11 @@ public class CoMoMBasis extends Basis{
 	}
 
 	/**
-	 * Initialises the basis for the begin of the recursion on next class
-	 * @param next_class the next class to be recursed on
+	 * Initialises the basis for population (0,...0)
 	 */	
 	@Override
-	public void initialiseForClass(int next_class) {
-		System.out.println("Intialisng for class " + next_class);	
+	public void initialiseBasis() {
+		System.out.println("Intialisng Basis");	
 	}
 	
 	/**

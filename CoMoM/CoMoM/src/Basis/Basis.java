@@ -46,10 +46,9 @@ public abstract class Basis {
 	}
 	
 	/**
-	 * Initialises the basis for the begin of the recursion on next class
-	 * @param next_class the next class to be recursed on
+	 * Initialises the basis for population (0,...0)
 	 */	
-	public abstract void initialiseForClass(int next_class);
+	public abstract void initialiseBasis();
 	
 	/**
 	 * Calculates the size of the basis to be store in variable size
