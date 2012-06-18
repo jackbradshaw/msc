@@ -121,18 +121,18 @@ public class CoMoMBasis extends Basis{
 	 */	
 	@Override
 	public void initialiseBasis() throws InternalErrorException {
-		System.out.println("Intialising Basis");
-		int i;
-		
+		System.out.println("Intialising Basis");		
 		// Negative populations have normalising constant equal to ZERO
-		for( i = 0 ; i < size; i++) {
+		for( int i = 0 ; i < size; i++) {
 			basis[i] = BigRational.ZERO;
 		}
-		PopulationChangeVector zero_population = new PopulationChangeVector(0,R);
-		i = this.indexOf(zero_population,0);
 		
 		// Zero populations have normalising constant equal to ONE
-		basis[i] = BigRational.ONE;		
+		PopulationChangeVector zero_population = new PopulationChangeVector(0,R);
+		for(int k = 0; k <= M; k++) {
+			int index = this.indexOf(zero_population,k);
+			basis[index] = BigRational.ONE;	
+		}	
 	}
 	
 	/**
@@ -150,9 +150,13 @@ public class CoMoMBasis extends Basis{
 		}
 		System.out.println("\nBasis Values: \n");		
 		for(int col = 0; col < size; col++ ) {
-			System.out.print(basis[col] + " ");
+			if(basis[col].isUndefined()) {
+				System.out.print("*" + "\n");
+			} else {
+				System.out.print(basis[col] + "\n");
+			}
 		}
-		System.out.print("\n\n");
+		System.out.print("\n");
 		for(int col = 0; col < size*2; col++ ) {
 			System.out.print("-");
 		}

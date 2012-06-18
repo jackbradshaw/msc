@@ -1,5 +1,6 @@
 package Basis;
 
+import java.util.HashSet;
 import java.util.Set;
 import DataStructures.BigRational;
 import DataStructures.QNModel;
@@ -24,14 +25,15 @@ public abstract class Basis {
 	protected BigRational[] basis;
 	
 	/**
+	 * Not really sure what this is for yet, but MoM uses it...
+	 */
+	protected Set<Integer> uncomputables;
+	
+	/**
 	 * Variable to store the size of the basis, due to frequent use
 	 */
 	protected int size;
 	
-	/**
-	 * Not really sure what this is for yet, but MoM uses it...
-	 */
-	protected Set<Integer> uncomputables;
 	
 	/**
 	 * Constructor
@@ -43,7 +45,8 @@ public abstract class Basis {
 		M = qnm.M;
 		setSize();		
 		basis = new BigRational[size];
-		//TODO uncomputables??
+		
+		uncomputables = new HashSet<Integer>();
 	}
 	
 	/**
@@ -77,5 +80,19 @@ public abstract class Basis {
 	//TODO think about this, copies references, garbage collection....
 	public void setBasis(BigRational[] v) {
 		basis = v;
+	}
+	
+	public void reset_uncomputables() {
+		for(int i = 0; i < size; i++) {
+			uncomputables.add(i);
+		}
+	}
+	
+	public void computatble(int i) {
+		uncomputables.remove(i);
+	}
+	
+	public Set<Integer> getUncomputables() {
+		return uncomputables;
 	}
 }

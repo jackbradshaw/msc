@@ -2,6 +2,8 @@ package Matrix;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+
 import DataStructures.BigRational;
 import DataStructures.QNModel;
 import DataStructures.Tuple;
@@ -19,6 +21,7 @@ public abstract class Matrix {
 	  */
 	 protected int size;	 
 	 
+		 
 	 /**
 	  * Constructor
 	  * @param qnm The Queuing Network Model under study
@@ -71,6 +74,10 @@ public abstract class Matrix {
 		 for(Tuple<Integer,Integer> position : update_list) {
 			 write(position.getX(), position.getY(), get(position.getX(),position.getY()).copy().add(BigRational.ONE));
 		 }
+	 }
+	 
+	 public List<Tuple<Integer,Integer>> get_update_list() {
+		 return update_list;
 	 }
 	 
 	 /**

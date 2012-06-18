@@ -1,5 +1,7 @@
 package Main;
 
+import javax.naming.OperationNotSupportedException;
+
 import Basis.BTFCoMoMBasisMLorder;
 import Basis.CoMoMBasis;
 import DataStructures.BigRational;
@@ -7,8 +9,10 @@ import DataStructures.PopulationChangeVector;
 import DataStructures.PopulationVector;
 import DataStructures.QNModel;
 import DataStructures.Tuple;
+import Exceptions.InconsistentLinearSystemException;
 import Exceptions.InputFileParserException;
 import Exceptions.InternalErrorException;
+import LinearSystem.SimpleSolver;
 import LinearSystem.Solver;
 import Matrix.Matrix;
 import Matrix.StandardMatrix;
@@ -16,7 +20,7 @@ import Utilities.MiscFunctions;
 
 public class Main {
 	
-	private static Matrix A, B;
+	private static StandardMatrix A, B;
 	
 	private static CoMoMBasis basis;
 	
@@ -30,7 +34,7 @@ public class Main {
 	
 	public static void main(String[] args) throws InputFileParserException, InternalErrorException {
 		
-		qnm = new QNModel("test_model_1.txt");
+		qnm = new QNModel("jack_test.txt");
 		M = qnm.M;
 		R = qnm.R;	
 		target_N = qnm.N;
@@ -40,15 +44,27 @@ public class Main {
 		A = new StandardMatrix(basis.getSize());
 		B = new StandardMatrix(basis.getSize());		
 		
-		solve();
+		try {
+			solve();
+		} catch (OperationNotSupportedException ex) {
+            ex.printStackTrace();
+            throw new InternalErrorException("Error in linear system solver.");
+        } catch (InconsistentLinearSystemException ex) {
+            ex.printStackTrace();
+            throw new InternalErrorException(ex.getMessage());
+        }
 		
+		PopulationChangeVector zeros = new PopulationChangeVector(0,R);
+		System.out.println("G = " + basis.getBasis()[basis.indexOf(zeros, 0)]);
 	}
 	
-	public static void solve() throws InternalErrorException {
+	public static void solve() throws InternalErrorException, OperationNotSupportedException, InconsistentLinearSystemException {
 		
+		solver = new SimpleSolver();
+		 
 		current_N = new PopulationVector(0,R);
-		basis.initialiseBasis();
 		
+		basis.initialiseBasis();		
 		basis.print_values();
 				
 		for(int current_class = 1; current_class <= R; current_class++) {
@@ -58,7 +74,13 @@ public class Main {
 		}
 	}
 	
-	public static void solveForClass(int current_class) throws InternalErrorException {
+	public static void solveForClass(int current_class) throws InternalErrorException, OperationNotSupportedException, InconsistentLinearSystemException {
+		
+		//If no jobs of current_class in target population, move onto next class
+		if(target_N.get(current_class - 1) == 0) {
+			return;
+		}		
+		
 		current_N.plusOne(current_class);
 		generateAB(current_N, current_class);
 		System.out.println("Intialising A and B:");
@@ -66,36 +88,44 @@ public class Main {
 		A.print();
 		System.out.println("B:");
 		B.print();
+		
+		solver.initialise(A.getArray(), A.get_update_list(), basis.getUncomputables());
+				
 		for(int current_class_population = current_N.get(current_class - 1); 
 				current_class_population <= target_N.get(current_class - 1); 
 				current_class_population++ ) {
 			
 			
 			System.out.println("Solving for population: " + current_N);
+			System.out.println(current_class_population);
+			
+			solver.goToULevel(current_class_population - 1);
 			
 			solveSystem();
 						
 			if(current_class_population < target_N.get(current_class - 1)) {
-				System.out.println("Updated A: ");
-				A.update();
-				A.print();
+				//System.out.println("Updated A: ");
+				//A.update();  Updating now done in solver
+				//A.print();
+				
 				current_N.plusOne(current_class);
 			}
 		}
 		
 	}
 	
-	public static void solveSystem() {
+	public static void solveSystem() throws OperationNotSupportedException, InconsistentLinearSystemException, InternalErrorException {
 		System.out.println("Solving System...\n");
 		BigRational[] sysB  = B.multiply(basis.getBasis());
-		//solve
-		basis.setBasis(sysB);
+		//MiscFunctions.printMatrix(sysB);
+		basis.setBasis(solver.solve(sysB));
 		basis.print_values();
 	}
 	
 	 public static void generateAB(PopulationVector N, int current_class) throws InternalErrorException {
 	 	A.reset();
 	 	B.reset();
+	 	basis.reset_uncomputables();
 	 			
 	   	int row = -1;
 	   	int col = 0;
@@ -107,6 +137,7 @@ public class Main {
 	   				row++;
 	   				col = basis.indexOf(n,k);
 	   				A.write(row, col, BigRational.ONE);
+	   				basis.computatble(col);
 	   				//System.out.println("Fisrt n: " + n);
 	   				//System.out.println("row: " + row);
 	   				if(n.sumTail(current_class) > 0) {  //negative population
@@ -130,14 +161,17 @@ public class Main {
 	   					row++;
 	   					col = basis.indexOf(n, k);
 	   					A.write(row, col, BigRational.ONE);
+	   					basis.computatble(col);
 	   					col = basis.indexOf(n, 0);
 	   					A.write(row, col, BigRational.ONE.negate());
+	   					basis.computatble(col);
 	   					for(int s = 1; s <= current_class - 1; s++) {
 	   						n.plusOne(s);	
 	   						//System.out.println("n: " + n);
 	   						col = basis.indexOf(n, k);
 	   						n.restore();
 	   						A.write(row, col, qnm.getDemandAsBigRational(k-1, s-1).negate());
+	   						basis.computatble(col);
 	   						//System.out.println("k-1,s-1: " + qnm.getDemandAsBigRational(k-1, s-1));
 	   					}
 	   					col = basis.indexOf(n, k);
@@ -146,14 +180,17 @@ public class Main {
 	   				for(int s = 1; s < current_class; s++) {
 	   					//add PC  corresponding to G(0, N - n) for each class s less than the current class
 	   					row++;
-	    					col = basis.indexOf(n, 0);
+	    				col = basis.indexOf(n, 0);
 	   					A.write(row, col, N.getAsBigRational(s-1).subtract(n.getAsBigRational(s-1))); 
+	   					basis.computatble(col);
 	   					n.plusOne(s);
 	   					col = basis.indexOf(n, 0);
 	   					A.write(row, col, qnm.getDelayAsBigRational(s-1).negate());
+	   					basis.computatble(col);
 	   					for(int k = 1; k <= M; k++) { //loop over all queues k (= sum)
 	   						col = basis.indexOf(n, k);
 	   						A.write(row, col, qnm.getDemandAsBigRational(k-1, s-1).negate());
+	   						basis.computatble(col);
 	   					}
 	   					n.restore();
 	   				}
@@ -167,6 +204,7 @@ public class Main {
 	   			row++;
 	   			col = basis.indexOf(n, 0);
 				A.write(row, col, N.getAsBigRational(current_class-1));
+				basis.computatble(col);
 				A.toBeUpdated(row, col);					
 				B.write(row, col, qnm.getDelayAsBigRational(current_class -1 ));
 				for( int k = 1; k <= M; k++) {

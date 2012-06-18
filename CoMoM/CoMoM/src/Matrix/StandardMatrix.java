@@ -56,6 +56,10 @@ public class StandardMatrix extends Matrix {
 		return array[row][col];
 	}
 
+	public BigRational[][] getArray() {
+		return array;
+	}
+	
 	/**
 	 * Multiplies v by the matrix
 	 * @param v
