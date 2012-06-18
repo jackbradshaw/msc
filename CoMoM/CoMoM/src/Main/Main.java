@@ -39,6 +39,10 @@ public class Main {
 		R = qnm.R;	
 		target_N = qnm.N;
 		
+		System.out.println("Model under study:\n");
+		qnm.printModel();
+		System.out.println("\n");
+		
 		basis = new BTFCoMoMBasisMLorder(qnm);		
 		
 		A = new StandardMatrix(basis.getSize());
@@ -54,8 +58,9 @@ public class Main {
             throw new InternalErrorException(ex.getMessage());
         }
 		
-		PopulationChangeVector zeros = new PopulationChangeVector(0,R);
-		System.out.println("G = " + basis.getBasis()[basis.indexOf(zeros, 0)]);
+		computePerformanceMeasures();		
+		qnm.printPerformaceMeasrues();
+		
 	}
 	
 	public static void solve() throws InternalErrorException, OperationNotSupportedException, InconsistentLinearSystemException {
@@ -72,6 +77,12 @@ public class Main {
 			System.out.println("Current Population: " + current_N);
 			solveForClass(current_class);			
 		}
+		
+		PopulationChangeVector zeros = new PopulationChangeVector(0,R);
+		BigRational G = basis.getBasis()[basis.indexOf(zeros, 0)];
+		System.out.println("G = " + G);
+		qnm.setNormalisingConstant(G);		
+		
 	}
 	
 	public static void solveForClass(int current_class) throws InternalErrorException, OperationNotSupportedException, InconsistentLinearSystemException {
@@ -110,8 +121,7 @@ public class Main {
 				
 				current_N.plusOne(current_class);
 			}
-		}
-		
+		}		
 	}
 	
 	public static void solveSystem() throws OperationNotSupportedException, InconsistentLinearSystemException, InternalErrorException {
@@ -120,6 +130,38 @@ public class Main {
 		//MiscFunctions.printMatrix(sysB);
 		basis.setBasis(solver.solve(sysB));
 		basis.print_values();
+	}
+	
+	public static void computePerformanceMeasures() throws InternalErrorException {
+		BigRational[] X = new BigRational[qnm.R];
+        BigRational[][] Q = new BigRational[qnm.M][qnm.R];
+        
+        PopulationChangeVector n = new PopulationChangeVector(0,R);
+        for(int job_class = 1; job_class < qnm.R; job_class++) {
+        	n.plusOne(job_class);
+        	System.out.println(n);
+        	System.out.println(basis.indexOf(n, 0));
+        	X[job_class-1] = (basis.getBasis()[basis.indexOf(n, 0)]).copy().divide(qnm.getNormalisingConstant());
+        	n.restore();
+        }
+        X[qnm.R-1] = (basis.getPreviousBasis()[basis.indexOf(n, 0)]).copy().divide(qnm.getNormalisingConstant());
+        
+        
+        for(int queue = 1; queue <= qnm.M; queue++) {
+        	for(int job_class = 1; job_class < qnm.R; job_class++) {
+        		Q[queue-1][job_class-1] = qnm.getDemandAsBigRational(queue - 1, job_class - 1).copy();
+        		n.plusOne(job_class);
+        		Q[queue-1][job_class-1] = Q[queue-1][job_class-1].multiply(basis.getBasis()[basis.indexOf(n, queue)]);
+        		n.restore();
+        		Q[queue-1][job_class-1] = Q[queue-1][job_class-1].divide(qnm.getNormalisingConstant());
+        	}    
+        	Q[queue-1][qnm.R-1] = qnm.getDemandAsBigRational(queue - 1, qnm.R - 1).copy();    		
+        	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].multiply(basis.getPreviousBasis()[basis.indexOf(n, queue)]);    		
+        	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].divide(qnm.getNormalisingConstant());
+        	
+        }
+        qnm.setPerformanceMeasures(Q, X);
+		
 	}
 	
 	 public static void generateAB(PopulationVector N, int current_class) throws InternalErrorException {

@@ -86,6 +86,7 @@ public class CoMoMBasis extends Basis{
 	 */
 	public int indexOf(PopulationChangeVector n, int m) throws InternalErrorException {
 		int population_position = order.indexOf(n);
+		if(population_position == -1) throw new InternalErrorException("Invalid PopulationChangeVector");
 		int queue_added = m;
 		//order multiplicities 1,2,3,...M,0			
 		int multiplicity_order;

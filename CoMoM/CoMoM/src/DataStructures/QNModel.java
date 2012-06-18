@@ -419,4 +419,12 @@ public class QNModel {
         max = (max < getMaxDemand())? getMaxDemand(): max;
         return max;
     }
+    
+    public void printPerformaceMeasrues() {
+    	System.out.println("\nMean Throughputs:");
+    	MiscFunctions.printMatrix(X);
+    	
+    	System.out.println("Mean Queue Lengths:");
+    	MiscFunctions.printMatrix(Q);
+    }
 }

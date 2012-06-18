@@ -25,6 +25,11 @@ public abstract class Basis {
 	protected BigRational[] basis;
 	
 	/**
+	 * The previous basis vector of normalising constants in the sequence of computation
+	 */
+	protected BigRational[] previous_basis;
+	
+	/**
 	 * Not really sure what this is for yet, but MoM uses it...
 	 */
 	protected Set<Integer> uncomputables;
@@ -45,6 +50,7 @@ public abstract class Basis {
 		M = qnm.M;
 		setSize();		
 		basis = new BigRational[size];
+		previous_basis = new BigRational[size];
 		
 		uncomputables = new HashSet<Integer>();
 	}
@@ -75,10 +81,20 @@ public abstract class Basis {
 	}
 	
 	/**
+	 * Returns the previous basis vector 
+	 */
+	public BigRational[] getPreviousBasis() {
+		return previous_basis;
+	}
+	
+	/**
 	 * Sets the basis vector 
 	 */
 	//TODO think about this, copies references, garbage collection....
 	public void setBasis(BigRational[] v) {
+		for(int i = 0; i < basis.length; i++) {	
+			previous_basis[i] = basis[i].copy();
+		}
 		basis = v;
 	}
 	
