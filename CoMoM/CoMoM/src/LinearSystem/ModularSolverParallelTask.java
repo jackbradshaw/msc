@@ -1,0 +1,223 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package LinearSystem;
+
+import DataStructures.BigRational;
+import Exceptions.InconsistentLinearSystemException;
+import Exceptions.InternalErrorException;
+import Utilities.MiscFunctions;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ *
+ * @author michalis
+ */
+public class ModularSolverParallelTask implements Callable<Object> {
+
+    private int /*N, */ ra, rb;
+    private BigInteger mod, M, factor;
+    private BigRational detRes;
+    private BigRational[] b, bmod, yRes;
+    private BigRational[][] /*A,*/ Amod;
+    private Set<Integer> rowsToSkip, columnsToSkip;
+    //private boolean precomputedModArrays;
+    private int Nrows, Ncols;
+    //private List<RowTask> rowAppliers;
+    //private ExecutorService es;
+
+    public ModularSolverParallelTask(BigInteger mod, BigInteger M, int nRowThreads) {
+        this.mod = mod;
+        this.M = M;
+        BigInteger Mi = M.divide(mod);
+        factor = Mi.modInverse(mod).multiply(Mi); //<Mi(-1)>Ni
+
+        /*es = Executors.newFixedThreadPool(nRowThreads);
+        rowAppliers = new ArrayList<RowTask>(nRowThreads);
+        for (int i = 0; i < nRowThreads; i++) {
+            rowAppliers.add(new RowTask());
+        }*/
+    }
+
+    public void prepare(BigRational[][] Amod, BigRational[] b, Set<Integer> rowsToSkip, Set<Integer> columnsToSkip, int ra, int rb) {
+        //this.N = Amod.length;
+        this.Nrows = Amod.length;
+        this.Ncols = Amod[0].length;
+        this.Amod = new BigRational[Nrows][Ncols];
+        MiscFunctions.arrayCopy(Amod, this.Amod);
+        //this.Amod = mod(A, mod);
+        this.b = b;
+        //this.bmod = mod(b, mod);
+        if (rowsToSkip.size() > columnsToSkip.size()) {
+            System.out.println("Must skip less number of rows than colums!");
+            System.exit(0);
+        }
+        this.rowsToSkip = new HashSet<Integer>(rowsToSkip);
+        this.columnsToSkip = new HashSet<Integer>(columnsToSkip);
+        //precomputedModArrays = false;
+
+        this.ra = ra;
+        this.rb = rb;
+    }
+
+    public void run() throws InternalErrorException, InconsistentLinearSystemException {
+        //try {
+            // Amod has been already computed
+            this.bmod = mod(b, mod);
+            detRes = BigRational.ONE;
+            yRes = new BigRational[Ncols];
+
+            // Gaussian Elimination
+            for (int k = 0; k < Ncols; k++) {
+                // Find the largest value row
+                int max = k;
+                for (int j = k + 1; j < Nrows; j++) {
+                    if ((Amod[j][k].abs().greaterThan(Amod[max][k].abs()))) {
+                        max = j;
+                    }
+                }
+                if (max != k) {
+                    // Swap the largest row with the ith row
+                    BigRational temp = bmod[k];
+                    bmod[k] = bmod[max];
+                    bmod[max] = temp;
+                    BigRational[] temp2 = Amod[k];
+                    Amod[k] = Amod[max];
+                    Amod[max] = temp2;
+                }
+
+                //if (Nrows - k < 15) {
+                    // do operations serially here
+                    for (int i = k + 1; i < Nrows; i++) {
+                        // Make row operation
+                        BigRational f = /*(Amod[k][k].isZero()) ? Amod[i][k] :*/ Amod[i][k].divide(Amod[k][k]);
+                        bmod[i] = bmod[i].subtract(f.multiply(bmod[k]));
+                        for (int j = k; j < Ncols; j++) {
+                            if (!Amod[k][j].isZero()) {
+                                Amod[i][j] = Amod[i][j].subtract(f.multiply(Amod[k][j]));
+                            }
+                        }
+                    }
+                /*} else {
+                    // do operations in parallel
+
+                    int startFrom = k + 1;
+                    for (int r = 0; r < rowAppliers.size(); r++) {
+                        int endAt = startFrom + (Nrows - k - 1) / rowAppliers.size() + 1;
+                        endAt = (endAt >= Nrows) ? Nrows : endAt;
+                        rowAppliers.get(r).prepare(Amod, bmod, k, startFrom, endAt, Ncols);
+                        startFrom = endAt;
+                    }
+                    es.invokeAll(rowAppliers);
+                }*/
+                detRes = detRes.multiply(Amod[k][k]);
+            }
+            //detRes = detRes.multiply(Amod[Ncols - 1][Ncols - 1]); // Because the loop above omits the last element
+            if (detRes.isZero()) {
+                throw new InconsistentLinearSystemException("Singular system. Cannot proceed.");
+            }
+            if (detRes.isNegative()) {
+                detRes = detRes.negate();
+            }
+            // Now the detRes=detRes has been computed
+
+            backSubstitution:
+            for (int i = Ncols - 1; i >= 0; i--) {
+                BigRational sum = BigRational.ZERO;
+                for (int j = i + 1; j < Ncols; j++) {
+                    if (!Amod[i][j].isZero()) {
+                        sum = sum.add(yRes[j].multiply(Amod[i][j]));
+                    }
+                }
+                yRes[i] = bmod[i].subtract(sum).divide(Amod[i][i]);
+            }
+
+            for (int i = 0; i < Ncols; i++) {
+                yRes[i] = yRes[i].multiply(detRes);
+            }
+
+            // Local Reconstruction
+            detRes = detRes.multiply(factor);
+            for (int i = 0; i < Ncols; i++) {
+                yRes[i] = yRes[i].multiply(factor);
+            }
+        /*} catch (InterruptedException ex) {
+            Logger.getLogger(ModularSolverParallelTask.class.getName()).log(Level.SEVERE, null, ex);
+        }*/
+    }
+
+    private BigRational[] mod(BigRational[] b, BigInteger mod) {
+        BigRational[] newb = new BigRational[Nrows];
+        int indexI = 0;
+        for (int i = 0; i < b.length; i++) {
+            if (!rowsToSkip.contains(i)) {
+                newb[indexI] = b[i].mod(mod);
+                indexI++;
+
+                if (b[i].isUndefined()) {
+                    System.out.println("Uncomputable element " + i + " in b vector! This must never occur here: deal with it in ModularSolver.");
+                    System.exit(0);
+                }
+            }
+
+        }
+        return newb;
+    }
+
+    /*public void toggleLineSwapped() {
+    previousInvocationSwapped = !previousInvocationSwapped;
+    }*/
+    public BigRational getDetRes() {
+        return detRes;
+    }
+
+    public BigRational[] getyRes() {
+        return yRes;
+    }
+
+    @Override
+    public Object call() throws Exception {
+        this.run();
+        return null;
+    }
+    /*
+    public BigRational hadamardLimit() {
+    BigRational limit = BigRational.ONE;
+    for (int j = 0; j < Ncols; j++) {
+    BigRational max = BigRational.ZERO;
+    for (int i = 0; i < Nrows; i++) {
+    if (Amod[i][j].abs().greaterThan(max)) {
+    max = Amod[i][j].abs();
+    }
+    }
+    if (!max.isZero()) {
+    limit = limit.multiply(max);
+    }
+    }
+    return limit;
+
+    }*/
+
+    public void shutdown() {
+        /*es.shutdown();
+        try {
+            es.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(ParallelSolver.class.getName()).log(Level.SEVERE, null, ex);
+            es.shutdownNow();
+        }*/
+    }
+}

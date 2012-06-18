@@ -1,0 +1,97 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package LinearSystem;
+
+import DataStructures.BigReal;
+import Utilities.MiscFunctions;
+
+/**
+ * Adapted from http://www.cs.princeton.edu/introcs/95linear/GaussianElimination.java.html
+ * @author michalis
+ */
+public class SilentLinSysSolver extends LinSysSolver {
+
+    public SilentLinSysSolver() {
+        super();
+    }
+
+
+    @Override
+    // Gaussian elimination with partial pivoting
+    public BigReal[] solve(BigReal[] b) {
+        /*System.out.println("Matrix A of system:");
+        MiscFunctions.printMatrix(A);
+        System.out.println("\nVector b of system:");
+        MiscFunctions.printMatrix(b);*/
+
+        int N = b.length;
+        if (N>100){
+            System.out.print("Solving LinSys.");
+        }
+
+        for (int p = 0; p < N; p++) {
+
+            // find pivot row and swap
+            int max = p;
+            for (int i = p + 1; i < N; i++) {
+                //if (Math.abs(A[i][p]) > Math.abs(A[max][p])) {
+                if (A[i][p].abs().greaterThan(A[max][p].abs())) {
+                    max = i;
+                }
+            }
+            BigReal[] temp = A[p];
+            A[p] = A[max];
+            A[max] = temp;
+            BigReal t = b[p];
+            b[p] = b[max];
+            b[max] = t;
+
+            // singular or nearly singular
+            //if (Math.abs(A[p][p]) <= EPSILON) {
+            BigReal pivot;
+            if (A[p][p].abs().smallerOrEqualThan(EPSILON)) {
+                //throw new RuntimeException("Matrix is singular or nearly singular");
+                pivot = BigReal.ONE;
+            } else {
+                pivot = A[p][p];
+            }
+
+            // pivot within A and b
+            for (int i = p + 1; i < N; i++) {
+                BigReal alpha = A[i][p].divide(pivot);
+                b[i] = b[i].subtract(alpha.multiply(b[p]));
+                for (int j = p; j < N; j++) {
+                    A[i][j] = A[i][j].subtract(alpha.multiply(A[p][j]));
+                }
+            }
+        }
+
+        // back substitution
+        BigReal[] x = new BigReal[N];
+        for (int i = N - 1; i >= 0; i--) {
+            BigReal sum = BigReal.ZERO;
+            for (int j = i + 1; j < N; j++) {
+                sum = sum.add(A[i][j].multiply(x[j]));
+            }
+            if (!A[i][i].isZero()) {
+                x[i] = (b[i].subtract(sum)).divide(A[i][i]);
+            } else {
+                x[i] = BigReal.ZERO;
+            }
+        }
+
+        if (N>100){
+            System.out.print(".");
+        }
+
+        // Restore original matrices
+        MiscFunctions.arrayCopy(cleanA, A);
+
+        if (N>100){
+            System.out.println(".OK!");
+        }
+        return x;
+    }
+}

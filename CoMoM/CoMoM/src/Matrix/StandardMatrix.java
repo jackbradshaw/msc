@@ -56,4 +56,40 @@ public class StandardMatrix extends Matrix {
 		return array[row][col];
 	}
 
+	/**
+	 * Multiplies v by the matrix
+	 * @param v
+	 * @return
+	 */
+	@Override
+	public BigRational[] multiply(BigRational[] v) {
+		//Taken for MiscFunctions
+		//TODO: Matrix multiplication must be parallelised
+		BigRational[][] A = array;
+        int rowsA = A.length;
+        int columnsA = A[0].length;
+        int rowsV = v.length;
+
+        if (columnsA == rowsV) {
+            BigRational[] c = new BigRational[rowsA];
+            for (int i = 0; i < rowsA; i++) {
+                c[i] = BigRational.ZERO;
+                for (int j = 0; j < columnsA; j++) {
+                    if (!A[i][j].isZero()) {
+                        if (v[j].isPositive()) {
+                            c[i] = c[i].add(A[i][j].multiply(v[j]));
+                        } else if (v[j].isUndefined()) {
+                            c[i] = new BigRational(-1);
+                            c[i].makeUndefined();
+                            break;
+                        }
+                    }
+                }
+            }
+            return c;
+        } else {
+            throw new ArithmeticException("Cannot multiply matrices with wrong sizes! (" + rowsA + "x" + columnsA + ")x(" + rowsV + "x1)");
+        }
+    }
+
 }

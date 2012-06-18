@@ -74,6 +74,13 @@ public abstract class Matrix {
 	 }
 	 
 	 /**
+	  * Multiplies vector by the matrix
+	  * @param vector
+	  * @return
+	  */
+	 public abstract BigRational[] multiply(BigRational[] vector);
+	 
+	 /**
 	  * Prints the matrix to screen
 	  */
 	 public abstract void print();

@@ -3,6 +3,7 @@ package Basis;
 import java.util.Set;
 import DataStructures.BigRational;
 import DataStructures.QNModel;
+import Exceptions.InternalErrorException;
 
 public abstract class Basis {
 
@@ -47,8 +48,9 @@ public abstract class Basis {
 	
 	/**
 	 * Initialises the basis for population (0,...0)
+	 * @throws InternalErrorException 
 	 */	
-	public abstract void initialiseBasis();
+	public abstract void initialiseBasis() throws InternalErrorException;
 	
 	/**
 	 * Calculates the size of the basis to be store in variable size
@@ -67,5 +69,13 @@ public abstract class Basis {
 	 */
 	public BigRational[] getBasis() {
 		return basis;
+	}
+	
+	/**
+	 * Sets the basis vector 
+	 */
+	//TODO think about this, copies references, garbage collection....
+	public void setBasis(BigRational[] v) {
+		basis = v;
 	}
 }

@@ -2,6 +2,7 @@ package Basis;
 
 import java.util.ArrayList;
 
+import DataStructures.BigRational;
 import DataStructures.MultiplicitiesVector;
 import DataStructures.PopulationChangeVector;
 import DataStructures.QNModel;
@@ -116,10 +117,22 @@ public class CoMoMBasis extends Basis{
 
 	/**
 	 * Initialises the basis for population (0,...0)
+	 * @throws InternalErrorException 
 	 */	
 	@Override
-	public void initialiseBasis() {
-		System.out.println("Intialisng Basis");	
+	public void initialiseBasis() throws InternalErrorException {
+		System.out.println("Intialising Basis");
+		int i;
+		
+		// Negative populations have normalising constant equal to ZERO
+		for( i = 0 ; i < size; i++) {
+			basis[i] = BigRational.ZERO;
+		}
+		PopulationChangeVector zero_population = new PopulationChangeVector(0,R);
+		i = this.indexOf(zero_population,0);
+		
+		// Zero populations have normalising constant equal to ONE
+		basis[i] = BigRational.ONE;		
 	}
 	
 	/**
@@ -129,4 +142,20 @@ public class CoMoMBasis extends Basis{
 	public void setSize() {
 		size  = (M + 1)*MiscFunctions.binomialCoefficient(M + R - 1 , M);		
 	}		
+
+	//TODO currently just for debugging purposes
+	public void print_values() {
+		for(int col = 0; col < size*2; col++ ) {
+			System.out.print("-");
+		}
+		System.out.println("\nBasis Values: \n");		
+		for(int col = 0; col < size; col++ ) {
+			System.out.print(basis[col] + " ");
+		}
+		System.out.print("\n\n");
+		for(int col = 0; col < size*2; col++ ) {
+			System.out.print("-");
+		}
+		System.out.print("\n\n");				
+	}
 }

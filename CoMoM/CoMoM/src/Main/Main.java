@@ -9,6 +9,7 @@ import DataStructures.QNModel;
 import DataStructures.Tuple;
 import Exceptions.InputFileParserException;
 import Exceptions.InternalErrorException;
+import LinearSystem.Solver;
 import Matrix.Matrix;
 import Matrix.StandardMatrix;
 import Utilities.MiscFunctions;
@@ -21,6 +22,8 @@ public class Main {
 	
 	private static QNModel qnm;
 	private static int M,R;	
+	
+	private static Solver solver;
 	
 	private static PopulationVector current_N;
 	private static PopulationVector target_N;
@@ -45,6 +48,8 @@ public class Main {
 		
 		current_N = new PopulationVector(0,R);
 		basis.initialiseBasis();
+		
+		basis.print_values();
 				
 		for(int current_class = 1; current_class <= R; current_class++) {
 			System.out.println("Working on class " + current_class);
@@ -82,6 +87,10 @@ public class Main {
 	
 	public static void solveSystem() {
 		System.out.println("Solving System...\n");
+		BigRational[] sysB  = B.multiply(basis.getBasis());
+		//solve
+		basis.setBasis(sysB);
+		basis.print_values();
 	}
 	
 	 public static void generateAB(PopulationVector N, int current_class) throws InternalErrorException {
