@@ -79,7 +79,9 @@ public class Main {
 		}
 				
 		//Store the computed normalsing constant
-		basis.setNormalisingConstant();		
+		BigRational G = basis.getNormalisingConstant();
+		System.out.println("G = " + G);
+		qnm.setNormalisingConstant(G);		
 		
 	}
 	

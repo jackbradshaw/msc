@@ -189,14 +189,13 @@ public class CoMoMBasis extends Basis{
 	}
 	
 	/**
-	 * Stores Normalising Constant in Queueing Network Model object
+	 * Returns the Normalising Constant for the current computed population  
 	 * @throws InternalErrorException 
 	 */
-	public void setNormalisingConstant() throws InternalErrorException {
+	public BigRational getNormalisingConstant() throws InternalErrorException {
 		PopulationChangeVector zeros = new PopulationChangeVector(0,R);
-		BigRational G = basis[indexOf(zeros, 0)];
-		System.out.println("G = " + G);
-		qnm.setNormalisingConstant(G);	
+		BigRational G = basis[indexOf(zeros, 0)];		
+		return G;	
 	}
 
 	//TODO currently just for debugging purposes

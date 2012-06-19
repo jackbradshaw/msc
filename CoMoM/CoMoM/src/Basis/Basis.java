@@ -96,10 +96,10 @@ public abstract class Basis {
 	
 	
 	/**
-	 * Stores Normalising Constant in Queueing Network Model object
+	 * Returns the Normalising Constant for the current computed population  
 	 * @throws InternalErrorException 
 	 */
-	public abstract void setNormalisingConstant() throws InternalErrorException;
+	public abstract BigRational getNormalisingConstant() throws InternalErrorException;
 	
 	/**
 	 * Sets the basis vector 
