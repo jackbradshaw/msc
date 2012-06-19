@@ -131,7 +131,7 @@ public class CoMoMBasis extends Basis{
 		// Zero populations have normalising constant equal to ONE
 		PopulationChangeVector zero_population = new PopulationChangeVector(0,R);
 		for(int k = 0; k <= M; k++) {
-			int index = this.indexOf(zero_population,k);
+			int index = indexOf(zero_population,k);
 			basis[index] = BigRational.ONE;	
 		}	
 	}
@@ -180,8 +180,7 @@ public class CoMoMBasis extends Basis{
         	}    
         	Q[queue-1][qnm.R-1] = qnm.getDemandAsBigRational(queue - 1, qnm.R - 1).copy();    		
         	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].multiply(previous_basis[indexOf(n, queue)]);    		
-        	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].divide(qnm.getNormalisingConstant());
-        	
+        	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].divide(qnm.getNormalisingConstant());        	
         }
         
         //Store outcome in queueing network model
@@ -216,5 +215,10 @@ public class CoMoMBasis extends Basis{
 			System.out.print("-");
 		}
 		System.out.print("\n\n");				
+	}
+	
+	//For testing purposes
+	public ArrayList<PopulationChangeVector> getOrder() {
+		return order;
 	}
 }
