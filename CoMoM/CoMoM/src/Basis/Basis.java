@@ -88,6 +88,20 @@ public abstract class Basis {
 	}
 	
 	/**
+	 * Computes Mean Throughput and Mean Queue Length performance indices
+	 * and stores them in the queueing network model object, qnm
+	 * @throws InternalErrorException
+	 */
+	public abstract void computePerformanceMeasures() throws InternalErrorException;
+	
+	
+	/**
+	 * Stores Normalising Constant in Queueing Network Model object
+	 * @throws InternalErrorException 
+	 */
+	public abstract void setNormalisingConstant() throws InternalErrorException;
+	
+	/**
 	 * Sets the basis vector 
 	 */
 	//TODO think about this, copies references, garbage collection....

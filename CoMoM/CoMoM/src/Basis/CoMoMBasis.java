@@ -142,7 +142,62 @@ public class CoMoMBasis extends Basis{
 	@Override
 	public void setSize() {
 		size  = (M + 1)*MiscFunctions.binomialCoefficient(M + R - 1 , M);		
-	}		
+	}	
+	
+	/**
+	 * Computes Mean Throughput and Mean Queue Length performance indices
+	 * and stores them in the queueing network model object, qnm
+	 * @throws InternalErrorException
+	 */
+	public void computePerformanceMeasures() throws InternalErrorException {
+		
+		//Array of Mean Throughputs per class
+		BigRational[] X = new BigRational[qnm.R];
+		
+		//Array of Mean Queue Lengths
+        BigRational[][] Q = new BigRational[qnm.M][qnm.R];
+        
+        PopulationChangeVector n = new PopulationChangeVector(0,R);
+        
+        //Computing Throughput
+        for(int job_class = 1; job_class < qnm.R; job_class++) {
+        	n.plusOne(job_class);
+        	System.out.println(n);
+        	System.out.println(indexOf(n, 0));
+        	X[job_class-1] = (basis[indexOf(n, 0)]).copy().divide(qnm.getNormalisingConstant());
+        	n.restore();
+        }
+        X[qnm.R-1] = (previous_basis[indexOf(n, 0)]).copy().divide(qnm.getNormalisingConstant());        
+        
+        //Computing Queue Lengths
+        for(int queue = 1; queue <= qnm.M; queue++) {
+        	for(int job_class = 1; job_class < qnm.R; job_class++) {
+        		Q[queue-1][job_class-1] = qnm.getDemandAsBigRational(queue - 1, job_class - 1).copy();
+        		n.plusOne(job_class);
+        		Q[queue-1][job_class-1] = Q[queue-1][job_class-1].multiply(basis[indexOf(n, queue)]);
+        		n.restore();
+        		Q[queue-1][job_class-1] = Q[queue-1][job_class-1].divide(qnm.getNormalisingConstant());
+        	}    
+        	Q[queue-1][qnm.R-1] = qnm.getDemandAsBigRational(queue - 1, qnm.R - 1).copy();    		
+        	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].multiply(previous_basis[indexOf(n, queue)]);    		
+        	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].divide(qnm.getNormalisingConstant());
+        	
+        }
+        
+        //Store outcome in queueing network model
+        qnm.setPerformanceMeasures(Q, X);		
+	}
+	
+	/**
+	 * Stores Normalising Constant in Queueing Network Model object
+	 * @throws InternalErrorException 
+	 */
+	public void setNormalisingConstant() throws InternalErrorException {
+		PopulationChangeVector zeros = new PopulationChangeVector(0,R);
+		BigRational G = basis[indexOf(zeros, 0)];
+		System.out.println("G = " + G);
+		qnm.setNormalisingConstant(G);	
+	}
 
 	//TODO currently just for debugging purposes
 	public void print_values() {
