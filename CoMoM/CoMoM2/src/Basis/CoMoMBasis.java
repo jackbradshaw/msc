@@ -1,6 +1,8 @@
 package Basis;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.ListIterator;
 
 import DataStructures.BigRational;
 import DataStructures.MultiplicitiesVector;
@@ -9,14 +11,12 @@ import DataStructures.QNModel;
 import Exceptions.InternalErrorException;
 import Utilities.MiscFunctions;
 
-public class CoMoMBasis extends Basis{		
-	
+public class CoMoMBasis extends Basis{			
 	
 	/**
 	 * Data Structure to hold the ordering of PopualtionChangeVectors
 	 */
-	protected ArrayList<PopulationChangeVector> order;
-	
+	protected ArrayList<PopulationChangeVector> order;	
 	
 	/**
 	 * Constructor
@@ -87,9 +87,12 @@ public class CoMoMBasis extends Basis{
 	public int indexOf(PopulationChangeVector n, int m) throws InternalErrorException {
 		int population_position = order.indexOf(n);
 		if(population_position == -1) throw new InternalErrorException("Invalid PopulationChangeVector");
-		
-		//order multiplicities 0,1,2,3,...M						
-		return population_position + m* MiscFunctions.binomialCoefficient(M + R - 1, M);
+		int queue_added = m;
+		//order multiplicities 1,2,3,...M,0			
+		int multiplicity_order;
+		if(queue_added == 0) multiplicity_order = M;
+		else multiplicity_order = queue_added - 1;		
+		return population_position + multiplicity_order* MiscFunctions.binomialCoefficient(M + R - 1, M);
 	}
 	
 	/**
@@ -99,8 +102,7 @@ public class CoMoMBasis extends Basis{
 	public PopulationChangeVector getPopulationChangeVector(int index) {
 		return order.get(index);
 	}
-	
-	
+		
 	/**
 	 * Prints the vectors in 'order'
 	 */
@@ -119,24 +121,22 @@ public class CoMoMBasis extends Basis{
 	 */	
 	@Override
 	public void initialiseBasis() throws InternalErrorException {
+		
 		System.out.println("Intialising Basis");		
 		// Negative populations have normalising constant equal to ZERO
 		for( int i = 0 ; i < size; i++) {
-			basis[i] = BigRational.ZERO;
+			basis.add(i, BigRational.ZERO);
+			previous_basis.add(i, BigRational.ZERO);
 		}
 		
 		// Zero populations have normalising constant equal to ONE
 		PopulationChangeVector zero_population = new PopulationChangeVector(0,R);
 		for(int k = 0; k <= M; k++) {
 			int index = indexOf(zero_population,k);
-			basis[index] = BigRational.ONE;	
+			basis.set(index, BigRational.ONE);	
 		}	
 	}
 	
-	@Override
-	public void initialiseForClass(int current_class) throws InternalErrorException {
-		//Do nothing
-	}
 	/**
 	 * Calculates the size of the basis to be store in variable size
 	 */
@@ -165,22 +165,22 @@ public class CoMoMBasis extends Basis{
         	n.plusOne(job_class);
         	System.out.println(n);
         	System.out.println(indexOf(n, 0));
-        	X[job_class-1] = (basis[indexOf(n, 0)]).copy().divide(qnm.getNormalisingConstant());
+        	X[job_class-1] = (basis.get(indexOf(n, 0))).copy().divide(qnm.getNormalisingConstant());
         	n.restore();
         }
-        X[qnm.R-1] = (previous_basis[indexOf(n, 0)]).copy().divide(qnm.getNormalisingConstant());        
+        X[qnm.R-1] = (previous_basis.get(indexOf(n, 0))).copy().divide(qnm.getNormalisingConstant());        
         
         //Computing Queue Lengths
         for(int queue = 1; queue <= qnm.M; queue++) {
         	for(int job_class = 1; job_class < qnm.R; job_class++) {
         		Q[queue-1][job_class-1] = qnm.getDemandAsBigRational(queue - 1, job_class - 1).copy();
         		n.plusOne(job_class);
-        		Q[queue-1][job_class-1] = Q[queue-1][job_class-1].multiply(basis[indexOf(n, queue)]);
+        		Q[queue-1][job_class-1] = Q[queue-1][job_class-1].multiply(basis.get(indexOf(n, queue)));
         		n.restore();
         		Q[queue-1][job_class-1] = Q[queue-1][job_class-1].divide(qnm.getNormalisingConstant());
         	}    
         	Q[queue-1][qnm.R-1] = qnm.getDemandAsBigRational(queue - 1, qnm.R - 1).copy();    		
-        	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].multiply(previous_basis[indexOf(n, queue)]);    		
+        	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].multiply(previous_basis.get(indexOf(n, queue)));    		
         	Q[queue-1][qnm.R-1] = Q[queue-1][qnm.R-1].divide(qnm.getNormalisingConstant());        	
         }
         
@@ -194,7 +194,7 @@ public class CoMoMBasis extends Basis{
 	 */
 	public BigRational getNormalisingConstant() throws InternalErrorException {
 		PopulationChangeVector zeros = new PopulationChangeVector(0,R);
-		BigRational G = basis[indexOf(zeros, 0)];		
+		BigRational G = basis.get(indexOf(zeros, 0));		
 		return G;	
 	}
 
@@ -205,10 +205,10 @@ public class CoMoMBasis extends Basis{
 		}
 		System.out.println("\nBasis Values: \n");		
 		for(int col = 0; col < size; col++ ) {
-			if(basis[col].isUndefined()) {
+			if(basis.get(col).isUndefined()) {
 				System.out.print("*" + "\n");
 			} else {
-				System.out.print(basis[col] + "\n");
+				System.out.print(basis.get(col) + "\n");
 			}
 		}
 		System.out.print("\n");
@@ -222,4 +222,9 @@ public class CoMoMBasis extends Basis{
 	public ArrayList<PopulationChangeVector> getOrder() {
 		return order;
 	}
+
+	@Override
+	public void initialiseForClass(int current_class) throws InternalErrorException {	}
+		
+	
 }

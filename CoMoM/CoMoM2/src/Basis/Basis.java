@@ -1,5 +1,6 @@
 package Basis;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import DataStructures.BigRational;
@@ -22,12 +23,12 @@ public abstract class Basis {
 	/**
 	 * The basis vector of normalising constants
 	 */
-	protected BigRational[] basis;
+	protected ArrayList<BigRational> basis;
 	
 	/**
 	 * The previous basis vector of normalising constants in the sequence of computation
 	 */
-	protected BigRational[] previous_basis;
+	protected ArrayList<BigRational> previous_basis;
 	
 	/**
 	 * Not really sure what this is for yet, but MoM uses it...
@@ -49,8 +50,8 @@ public abstract class Basis {
 		R = qnm.R;
 		M = qnm.M;
 		setSize();		
-		basis = new BigRational[size];
-		previous_basis = new BigRational[size];
+		basis = new ArrayList<BigRational>(size);
+		previous_basis =  new ArrayList<BigRational>(size);
 		
 		uncomputables = new HashSet<Integer>();
 	}
@@ -60,8 +61,6 @@ public abstract class Basis {
 	 * @throws InternalErrorException 
 	 */	
 	public abstract void initialiseBasis() throws InternalErrorException;
-	
-	public abstract void initialiseForClass(int current_class) throws InternalErrorException;
 	
 	/**
 	 * Calculates the size of the basis to be store in variable size
@@ -78,14 +77,14 @@ public abstract class Basis {
 	/**
 	 * Returns the basis vector for mutation
 	 */
-	public BigRational[] getBasis() {
+	public ArrayList<BigRational> getBasis() {
 		return basis;
 	}
 	
 	/**
 	 * Returns the previous basis vector 
 	 */
-	public BigRational[] getPreviousBasis() {
+	public ArrayList<BigRational> getPreviousBasis() {
 		return previous_basis;
 	}
 	
@@ -107,11 +106,22 @@ public abstract class Basis {
 	 * Sets the basis vector 
 	 */
 	//TODO think about this, copies references, garbage collection....
-	public void setBasis(BigRational[] v) {
-		for(int i = 0; i < basis.length; i++) {	
-			previous_basis[i] = basis[i].copy();
+	public void setBasis(ArrayList<BigRational> v) {
+		for(int i = 0; i < basis.size(); i++) {	
+			previous_basis.set(i, basis.get(i).copy());
 		}
 		basis = v;
+	}
+	
+	/**
+	 * Sets the basis vector 
+	 */
+	//TODO think about this, copies references, garbage collection....
+	public void setBasis(BigRational[] b) {
+		for(int i = 0; i < basis.size(); i++) {	
+			previous_basis.set(i, basis.get(i).copy());
+			basis.set(i, b[i]);
+		}		
 	}
 	
 	public void reset_uncomputables() {
@@ -127,4 +137,6 @@ public abstract class Basis {
 	public Set<Integer> getUncomputables() {
 		return uncomputables;
 	}
+	
+	public abstract void initialiseForClass(int current_class) throws InternalErrorException;
 }

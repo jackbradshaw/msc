@@ -1,10 +1,12 @@
 package Main;
 
+import java.util.ArrayList;
+
 import javax.naming.OperationNotSupportedException;
 
 import Basis.BTFCoMoMBasisMLorder;
+import Basis.BTFCoMoMBasisReorder;
 import Basis.CoMoMBasis;
-import Basis.CoMoMReorderingBasis;
 import DataStructures.BigRational;
 import DataStructures.PopulationChangeVector;
 import DataStructures.PopulationVector;
@@ -23,7 +25,7 @@ public class Main {
 	
 	private static StandardMatrix A, B;
 	
-	private static CoMoMBasis basis;
+	private static BTFCoMoMBasisReorder basis;
 	
 	private static QNModel qnm;
 	private static int M,R;	
@@ -44,9 +46,7 @@ public class Main {
 		qnm.printModel();
 		System.out.println("\n");
 		
-		//basis = new BTFCoMoMBasisMLorder(qnm);	
-		//basis = new CoMoMBasis(qnm);
-		basis = new CoMoMReorderingBasis(qnm);
+		basis = new BTFCoMoMBasisReorder(qnm);		
 		
 		A = new StandardMatrix(basis.getSize());
 		B = new StandardMatrix(basis.getSize());		
@@ -78,10 +78,8 @@ public class Main {
 		for(int current_class = 1; current_class <= R; current_class++) {
 			System.out.println("Working on class " + current_class);
 			System.out.println("Current Population: " + current_N);
-			
-			basis.initialiseForClass(current_class);
-			
-			solveForClass(current_class);			
+			solveForClass(current_class);		
+			//return;
 		}
 				
 		//Store the computed normalsing constant
@@ -98,13 +96,17 @@ public class Main {
 			return;
 		}		
 		
+		basis.initialiseForClass(current_class);
+		
+		
 		current_N.plusOne(current_class);
-		generateAB(current_N, current_class);
+		generateAB2(current_N, current_class);
 		System.out.println("Intialising A and B:");
 		System.out.println("A:");
 		A.print();
 		System.out.println("B:");
 		B.print();
+		
 		
 		solver.initialise(A.getArray(), A.get_update_list(), basis.getUncomputables());
 				
@@ -132,7 +134,9 @@ public class Main {
 	
 	public static void solveSystem() throws OperationNotSupportedException, InconsistentLinearSystemException, InternalErrorException {
 		System.out.println("Solving System...\n");
-		BigRational[] sysB  = B.multiply(basis.getBasis());
+		
+		BigRational[] sysB = new BigRational[basis.getSize()];
+		sysB  = B.multiply(basis.getBasis().toArray(sysB));
 		//MiscFunctions.printMatrix(sysB);
 		basis.setBasis(solver.solve(sysB));
 		basis.print_values();
@@ -171,7 +175,7 @@ public class Main {
 	   				}    				
 	   			}
 	   		} else {
-	   			if(n.sumHead(current_class - 1) < M) {
+	   			if(n.sumHead(current_class - 2) < M) {    //TODO changed to - 2 from - 1, check it dosn't break it
 	   				for(int k = 1; k <= M; k++) {
 	   					//add CE corresponding to G(0, N - n) for each queue k
 	   					row++;
@@ -181,7 +185,7 @@ public class Main {
 	   					col = basis.indexOf(n, 0);
 	   					A.write(row, col, BigRational.ONE.negate());
 	   					basis.computatble(col);
-	   					for(int s = 1; s <= current_class - 1; s++) {
+	   					for(int s = 1; s <= current_class - 1; s++) {  //TODO can change to R - 1 ? No, some coefficients in B
 	   						n.plusOne(s);	
 	   						//System.out.println("n: " + n);
 	   						col = basis.indexOf(n, k);
@@ -230,4 +234,101 @@ public class Main {
 	   		}
 	   	}
 	}
+
+
+
+public static void generateAB2(PopulationVector N, int current_class) throws InternalErrorException {
+ 	A.reset();
+ 	B.reset();
+ 	basis.reset_uncomputables();
+ 			
+   	int row = -1;
+   	int col = 0;
+   	PopulationChangeVector n;
+   	for(int i = 0; i < MiscFunctions.binomialCoefficient(M + R - 1 , M); i++)  { //loop over all possible population changes n
+   		n  = basis.getPopulationChangeVector(i).copy(); // To improve bug safety
+   		if(n.sumTail(current_class-1) > 0) {  //potential negative population
+   			for(int k = 0; k <= M; k++) {
+   				row++;
+   				col = basis.indexOf(n,k,current_class);
+   				A.write(row, col, BigRational.ONE);
+   				basis.computatble(col);
+   				//System.out.println("Fisrt n: " + n);
+   				//System.out.println("row: " + row);
+   				if(n.sumTail(current_class) > 0) {  //negative population
+   					//System.out.println("1");
+   					col = basis.indexOf(n, k,current_class);
+   					//System.out.println("col: " + col);
+   					B.write(row, col, BigRational.ONE);
+   				} else {
+   					//System.out.println("2");
+   					n.minusOne(current_class);    					
+   					col = basis.indexOf(n, k,current_class);
+   					//System.out.println("col: " + col);
+   					B.write(row, col,BigRational.ONE);
+   					n.restore();
+   				}    				
+   			}
+   		} else {
+   			if(n.sumHead(current_class - 2) < M) {    //TODO changed to - 2 from - 1, check it dosn't break it
+   				for(int k = 1; k <= M; k++) {
+   					//add CE corresponding to G(0, N - n) for each queue k
+   					row++;
+   					col = basis.indexOf(n, k,current_class);
+   					A.write(row, col, BigRational.ONE);
+   					basis.computatble(col);
+   					col = basis.indexOf(n, 0,current_class);
+   					A.write(row, col, BigRational.ONE.negate());
+   					basis.computatble(col);
+   					for(int s = 1; s <= current_class - 1; s++) {  //TODO can change to R - 1 ? No, some coefficients in B
+   						n.plusOne(s);	
+   						//System.out.println("n: " + n);
+   						col = basis.indexOf(n, k,current_class);
+   						n.restore();
+   						A.write(row, col, qnm.getDemandAsBigRational(k-1, s-1).negate());
+   						basis.computatble(col);
+   						//System.out.println("k-1,s-1: " + qnm.getDemandAsBigRational(k-1, s-1));
+   					}
+   					col = basis.indexOf(n, k,current_class);
+  					B.write(row, col, qnm.getDemandAsBigRational(k-1, current_class-1));
+  				}
+   				for(int s = 1; s < current_class; s++) {
+   					//add PC  corresponding to G(0, N - n) for each class s less than the current class
+   					row++;
+    				col = basis.indexOf(n, 0,current_class);
+   					A.write(row, col, N.getAsBigRational(s-1).subtract(n.getAsBigRational(s-1))); 
+   					basis.computatble(col);
+   					n.plusOne(s);
+   					col = basis.indexOf(n, 0,current_class);
+   					System.out.println("s: " + s);
+   					System.out.println("n: " + n);
+   					A.write(row, col, qnm.getDelayAsBigRational(s-1).negate());
+   					basis.computatble(col);
+   					for(int k = 1; k <= M; k++) { //loop over all queues k (= sum)
+   						col = basis.indexOf(n, k,current_class);
+   						A.write(row, col, qnm.getDemandAsBigRational(k-1, s-1).negate());
+   						basis.computatble(col);
+   					}
+   					n.restore();
+   				}
+   			}    			    			
+   		}
+   	}
+   	for(int i = 0; i < MiscFunctions.binomialCoefficient(M + R - 1 , M); i++)  { //loop over all possible population changes n
+   		//add PC of class 'current_class'
+   		n  = basis.getPopulationChangeVector(i).copy(); // To improve bug safety
+   		if(n.sumTail(current_class-1) <= 0) {  // TODO remove <
+   			row++;
+   			col = basis.indexOf(n, 0,current_class);
+			A.write(row, col, N.getAsBigRational(current_class-1));
+			basis.computatble(col);
+			A.toBeUpdated(row, col);					
+			B.write(row, col, qnm.getDelayAsBigRational(current_class -1 ));
+			for( int k = 1; k <= M; k++) {
+				col = basis.indexOf(n, k,current_class);
+				B.write(row, col, qnm.getDemandAsBigRational( k - 1, current_class -1 ));					
+			}
+   		}
+   	}
+}
 }

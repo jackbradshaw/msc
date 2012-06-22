@@ -1,0 +1,54 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package DataStructures;
+
+/**
+ *
+ * @author michalis
+ */
+public class MyVectorComparator implements java.util.Comparator {
+
+    @Override
+    public int compare(Object vec1, Object vec2) {
+        MyVector v1 = (MyVector) vec1;
+        MyVector v2 = (MyVector) vec2;
+        int ret = 1;
+
+        if (v1.size() < v2.size()) {
+            ret = -1;
+        } else if (v1.size() > v2.size()) {
+            ret = 1;
+        } else {
+            // The Vectors have equal length
+            // First try to sort using number of zero elements
+            int zerosOfv1 = v1.countZeroElements();
+            int zerosOfv2 = v2.countZeroElements();
+            if (zerosOfv1 < zerosOfv2) {
+                ret = -1;
+            } else if (zerosOfv1 > zerosOfv2) {
+                ret = 1;
+            } else {
+                // Check if they are equal
+                if (v1.equals(v2)) {
+                    ret = 0;
+                } else {
+                    // Worst case, same number of non-zero elements. Now we must find the 
+                    // smaller checking element-by-element.
+                    for (int i = 0; i < v1.size(); i++) {
+                        if (v1.get(i)>0 && v2.get(i)== 0) {
+                            ret = -1;
+                            break;
+                        } else if (v1.get(i) == 0 &&  v2.get(i)>0) {
+                            ret = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return ret;
+    }
+}
